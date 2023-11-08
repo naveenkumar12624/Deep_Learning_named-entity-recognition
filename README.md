@@ -1,6 +1,5 @@
 ### EX NO : 06
 # <p align="center">Named Entity Recognition</p>
-
 ## AIM :
 To develop an LSTM-based model for recognizing the named entities in the text.
 
