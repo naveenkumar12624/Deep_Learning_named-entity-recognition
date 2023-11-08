@@ -1,8 +1,7 @@
-### EX NO : 05
+### EX NO : 06
 # <p align="center">Named Entity Recognition</p>
 
 ## AIM :
-
 To develop an LSTM-based model for recognizing the named entities in the text.
 
 ## Problem Statement and Dataset :
@@ -13,8 +12,6 @@ To develop an LSTM-based model for recognizing the named entities in the text.
 <p align="center">
 <img width="350" src="https://user-images.githubusercontent.com/93427237/235588954-f733a2ec-a679-410f-b95c-8cc255aa1939.png">
 </p>
-
-</br></br>
 
 ## DESIGN STEPS :
 ### STEP 1:
@@ -38,9 +35,7 @@ We build the model using Input, Embedding, Bidirectional LSTM, Spatial Dropout, 
 ### STEP 7:
 We compile the model to fit the train sets and validation sets.
 
-
 ## PROGRAM :
-
 ### Libraries
 ```py
 import pandas as pd
@@ -56,20 +51,14 @@ from tensorflow.keras.preprocessing import sequence
 ### Read & Pre-Process Data
 ```py
 data = pd.read_csv("ner_dataset.csv", encoding="latin1")
-
 data.head(50)
-
 data = data.fillna(method="ffill")
-
 data.head(50)
-
 print("Unique words in corpus:", data['Word'].nunique())
 print("Unique tags in corpus:", data['Tag'].nunique())
-
 words=list(data['Word'].unique())
 words.append("ENDPAD")
 tags=list(data['Tag'].unique())
-
 print("Unique tags are:", tags)
 ```
 ### Define Class to Get Sentance
@@ -84,7 +73,6 @@ class SentenceGetter(object):
                                                            s["Tag"].values.tolist())]
         self.grouped = self.data.groupby("Sentence #").apply(agg_func)
         self.sentences = [s for s in self.grouped]
-    
     def get_next(self):
         try:
             s = self.grouped["Sentence: {}".format(self.n_sent)]
@@ -92,74 +80,42 @@ class SentenceGetter(object):
             return s
         except:
             return None
-
 getter = SentenceGetter(data)
 sentences = getter.sentences
-
 len(sentences)
-
 word2idx = {w: i + 1 for i, w in enumerate(words)}
 tag2idx = {t: i for i, t in enumerate(tags)}
-
 X1 = [[word2idx[w[0]] for w in s] for s in sentences]
 ```
 ### Padding
 ```py
 nums = [[1], [2, 3], [4, 5, 6]]
 sequence.pad_sequences(nums)
-
 nums = [[1], [2, 3], [4, 5, 6]]
 sequence.pad_sequences(nums,maxlen=2)
-
-X = sequence.pad_sequences(maxlen=max_len,
-                  sequences=X1, padding="post",
-                  value=num_words-1)
-
+X = sequence.pad_sequences(maxlen=max_len, sequences=X1, padding="post",value=num_words-1)
 y1 = [[tag2idx[w[2]] for w in s] for s in sentences]
-
-y = sequence.pad_sequences(maxlen=max_len,
-                  sequences=y1,
-                  padding="post",
-                  value=tag2idx["O"])
-
-X_train, X_test, y_train, y_test = train_test_split(X, y,
-                                                    test_size=0.2, random_state=1)
+y = sequence.pad_sequences(maxlen=max_len, sequences=y1,padding="post",value=tag2idx["O"])
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=1)
 ```
 ### LSTM Model
 ```py
 input_word = layers.Input(shape=(max_len,))
-
 embedding_layer = layers.Embedding(input_dim=num_words,output_dim=50,
                                    input_length=max_len)(input_word)
 dropout = layers.SpatialDropout1D(0.1)(embedding_layer)
-
-bid_lstm = layers.Bidirectional(
-    layers.LSTM(units=100,return_sequences=True,
-                recurrent_dropout=0.1))(dropout)
-
-output = layers.TimeDistributed(
-    layers.Dense(num_tags,activation="softmax"))(bid_lstm)
-
+bid_lstm = layers.Bidirectional(layers.LSTM(units=100,return_sequences=True, recurrent_dropout=0.1))(dropout)
+output = layers.TimeDistributed(layers.Dense(num_tags,activation="softmax"))(bid_lstm)
 model = Model(input_word, output)  
-
 model.summary()
-
-model.compile(optimizer="adam",
-              loss="sparse_categorical_crossentropy",
-              metrics=["accuracy"])
-
-history = model.fit(
-    x=X_train, y=y_train, validation_data=(X_test,y_test),
-    batch_size=50, epochs=3,
-)
+model.compile(optimizer="adam",loss="sparse_categorical_crossentropy",metrics=["accuracy"])
+history = model.fit( x=X_train, y=y_train, validation_data=(X_test,y_test),batch_size=50, epochs=3,)
 ```
 ### Metrics
 ```py
 metrics = pd.DataFrame(model.history.history)
 metrics.head()
-
 metrics[['accuracy','val_accuracy']].plot()
-
 metrics[['loss','val_loss']].plot()
 ```
 ### Prediction
